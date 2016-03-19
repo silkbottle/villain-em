@@ -1,0 +1,59 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+\title{\textbf{Application period. The challenged investigator.}}
+\author{Roman Klokov, Ivan Sosnovik, Ilia Yakubovskiy}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Model}
+
+$$p(x, \mathbf{d}|\boldsymbol{\theta}) =  p(\mathbf{d})p(x|\mathbf{d}, \boldsymbol{\theta})$$
+
+Let's define indexes of face points as: 
+$$Face(\mathbf{d}) = \{(ij): d_h \leq i < d_h + h, d_w \leq i < d_w + w\}$$.
+
+$$p(x|\mathbf{d}, \boldsymbol{\theta}) = \prod_{(ij) \in Face(\mathbf{d})} \mathcal{N}(x_{ij}|f_{i-d_h, j-d_w}, \sigma^2) \prod_{(ij) \notin Face(\mathbf{d})} \mathcal{N}(x_{ij}|b_{ij}, \sigma^2)$$
+
+$$p(d_h = i, d_w = j) = w_{ij}$$
+
+Then latents variables are $\mathbf{d}$, parameters of model are $\boldsymbol{\theta} = \{\mathbf{W}, \mathbf{F}, \mathbf{B}, \sigma^2\}$.
+
+\section{EM-algorithm}
+\subsection{E-step}
+
+$$p(\mathbf{D}|\mathbf{X}, \boldsymbol{\theta}) = \prod_{n=1}^N p(\mathbf{d}_n|x_n, \boldsymbol{\theta}) = \prod_{n=1}^N \frac{p(x_n, \mathbf{d}_n| \boldsymbol{\theta})}{p(x_n|\boldsymbol{\theta})} = \prod_{n=1}^N \frac{p(\mathbf{d_n})p(x_n|\mathbf{d_n}, \boldsymbol{\theta})}{\sum\limits_{\mathbf{d}}p(\mathbf{d})p(x_n|\mathbf{d}, \boldsymbol{\theta})}$$
+
+$$\gamma^n_{ij} = p(d^n_h = i, d^n_w = j|x_n, \boldsymbol{\theta})$$
+
+\subsection{M-step}
+
+For $\mathbf{W}$:
+
+$$\mathbb{E}[\log p(\mathbf{X}, \mathbf{D}|\boldsymbol{\theta})] = \sum_{n=1}^N \sum_{ij} \gamma^n_{ij} \log w_{ij} + \mathit{const}$$
+$$\frac{\partial}{\partial w_{kl}} \Big[\sum_{n=1}^N \sum_{ij} \gamma^n_{ij} \log w_{ij} + \lambda (\sum_{ij} w_{ij} - 1) + \mathit{const}\Big] = \sum_{n=1}^N \frac{\gamma^n_{kl}}{w_{kl}} + \lambda = 0$$
+$$\mathbf{W} = \frac{\sum\limits_{n=1}^N\boldsymbol{\Gamma}_n}{\sum\limits_{n=1}^N\sum\limits_{ij}\gamma^n_{ij}}$$
+\noindent
+For $\mathbf{F}$:
+
+$$\mathbb{E}[\log p(\mathbf{X}, \mathbf{D}|\boldsymbol{\theta})] = - \sum_{ij} \sum_{n=1}^N \gamma^n_{ij} \sum_{(kl) \in Face(ij)} \frac{(x^n_{kl} - f_{k - i, l - j})^2}{2\sigma^2} + \mathit{const}$$
+$$f_{ij} = \frac{\sum\limits_{kl} \sum\limits_{n=1}^N \gamma^n_{kl} x^n_{k+i,l+j}}{\sum\limits_{kl} \sum\limits_{n=1}^N \gamma^n_{kl}}$$
+\noindent
+For $\mathbf{B}$:
+
+$$\mathbb{E}[\log p(\mathbf{X}, \mathbf{D}|\boldsymbol{\theta})] = - \sum_{ij} \sum_{n=1}^N \gamma^n_{ij} \sum_{(kl) \notin Face(ij)} \frac{(x^n_{kl} - b_{kl})^2}{2\sigma^2} + \mathit{const}$$
+$$b_{ij} = \frac{\sum\limits_{(ij) \notin Face(kl)} \sum\limits_{n=1}^N \gamma^n_{kl} x^n_{ij}}{\sum\limits_{(ij) \notin Face(kl)} \sum\limits_{n=1}^N \gamma^n_{kl}}$$
+
+\noindent
+For $\sigma^2$:
+$$\mathbb{E}[\log p(\mathbf{X}, \mathbf{D}|\boldsymbol{\theta})] = - \frac{N}{2}\log \sigma^2 -$$ $$ - \frac{1}{2\sigma^2} \sum_{ij} \sum_{n=1}^N \gamma^n_{ij} \Big[ \sum_{(kl) \in Face(ij)} (x^n_{kl} - f_{k - i, l - j})^2 + \sum_{(kl) \notin Face(ij)} (x^n_{kl} - b_{kl})^2 \Big] + \mathit{const}$$
+
+$$\sigma^2 = \frac{1}{N}\sum_{ij} \sum_{n=1}^N \gamma^n_{ij} \Big[ \sum_{(kl) \in Face(ij)} (x^n_{kl} - f_{k - i, l - j})^2 + \sum_{(kl) \notin Face(ij)} (x^n_{kl} - b_{kl})^2 \Big]$$
+
+\end{document}
