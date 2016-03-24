@@ -26,8 +26,10 @@ def Generate(background, bkg_size, picture, pic_size, N_samples, sigma):
             
     pics = np.zeros((bkg.shape[0], bkg.shape[1], N_samples), dtype=np.float32)
     for i in xrange(N_samples):
-        pics[:, :, i] += (bkg/255.0)
-        pics[pos[i, 0]:pos[i, 0]+pic.shape[0], pos[i, 1]:pos[i, 1]+pic.shape[1], i] = (pic/255.0)
+        pics[:, :, i] += bkg
+        pics[pos[i, 0]:pos[i, 0]+pic.shape[0], pos[i, 1]:pos[i, 1]+pic.shape[1], i] = pic
     pics += np.random.normal(0, sigma, pics.shape)
+    pics[pics < 0] = 0
+    pics[pics > 255] = 255
     
-    return pics
+    return np.uint8(pics)
